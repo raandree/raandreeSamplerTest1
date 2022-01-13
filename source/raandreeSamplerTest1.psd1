@@ -26,6 +26,8 @@ Author = 'Me'
 # Company or vendor of this module
 CompanyName = 'Unknown'
 
+PowerShellVersion = '5.0'
+
 # Copyright statement for this module
 Copyright = '(c) 2022 Me. All rights reserved.'
 
@@ -121,6 +123,3 @@ PrivateData = @{
 # DefaultCommandPrefix = ''
 
 }
-
-
-

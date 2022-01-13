@@ -8,7 +8,6 @@
 # OutputDirectory: ../output/Sampler
 CopyPaths:
   - en-US
-  - DSCResources
   # - Modules
 Encoding: UTF8
 # Can be used to manually specify module's semantic version if the preferred method of
@@ -119,7 +118,9 @@ DscTest:
     - output
   ExcludeModuleFile:
     - Modules/DscResource.Common
+    - Modules/Folder.Common
   #  - Templates
+  MainGitBranch: main
 
 # Import ModuleBuilder tasks from a specific PowerShell module using the build
 # task's alias. Wildcard * can be used to specify all tasks that has a similar

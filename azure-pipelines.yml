@@ -50,6 +50,14 @@ stages:
               publishLocation: 'pipeline'
               parallel: true
 
+          - task: PowerShell@2
+            name: displayEnvironmentVariables
+            displayName: 'Display Environment Variables'
+            inputs:
+              targetType: 'inline'
+              script: |
+                dir -Path env: | Out-String | Write-Host
+
   - stage: Deploy
     # Only execute deploy stage if we're on master and previous stage succeeded
     condition: |

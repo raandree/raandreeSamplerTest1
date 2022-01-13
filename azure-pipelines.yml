@@ -276,11 +276,8 @@ stages:
     condition: |
       and(
         succeeded(),
-        or(
-          eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+        eq(variables['Build.SourceBranch'], 'refs/heads/main'),
           startsWith(variables['Build.SourceBranch'], 'refs/tags/')
-        ),
-        contains(variables['System.TeamFoundationCollectionUri'], 'synedgy')
       )
     jobs:
       - job: Deploy_Module

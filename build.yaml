@@ -68,6 +68,8 @@ BuildWorkflow:
     #- Merge_CodeCoverage_Files
 
   publish:
+    - UpdateTag
+    - SetChangeLog
     - publish_module_to_gallery
 
 
@@ -141,6 +143,9 @@ TaskHeader: |
   Write-Build DarkGray "  $($Task.InvocationInfo.ScriptName):$($Task.InvocationInfo.ScriptLineNumber)"
   ""
 
-
-
-
+GitHubConfig:
+  GitHubFilesToAdd:
+    - 'CHANGELOG.md'
+  GitHubConfigUserName: dscbot
+  GitHubConfigUserEmail: dsccommunity@outlook.com
+  UpdateChangelogOnPrerelease: false

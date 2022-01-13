@@ -24,7 +24,7 @@ param
 
     [Parameter()]
     [string]
-    $PAT = (property PAT ''), #retrieves from environment variable
+    $PAT = (property PAT ''),
 
     [Parameter()]
     [string]
@@ -74,6 +74,7 @@ function Invoke-Utility
     # Workaround: Prevents 2> redirections applied to calls to this function
     #             from accidentally triggering a terminating error.
     #             See bug report at https://github.com/PowerShell/PowerShell/issues/4002
+
     $ErrorActionPreference = 'Continue'
     try
     {
@@ -83,13 +84,14 @@ function Invoke-Utility
     {
         Throw
     } # catch is triggered ONLY if $exe can't be found, never for errors reported by $exe itself
+
     if ($LASTEXITCODE)
     {
         Throw "$exe indicated failure (exit code $LASTEXITCODE; full command: $Args)."
     }
 }
 
-task UpdateTag -if ($PAT) {
+task UpdateGitTag -if ($PAT) {
 
     . Set-SamplerTaskVariable
 
@@ -115,6 +117,7 @@ task UpdateTag -if ($PAT) {
         $env:GCM_PROVIDER = 'generic'
         Invoke-Utility git fetch --all --tags
         Invoke-Utility git ls-remote --tags origin
+
         $existingTags = try
         {
             Invoke-Utility git describe --tags
@@ -127,17 +130,20 @@ task UpdateTag -if ($PAT) {
         $releaseTag = "v$ModuleVersion"
         if ($existingTags -notcontains $releaseTag)
         {
-            Invoke-Utility git tag $ReleaseTag
+            Invoke-Utility git tag $releaseTag
         }
 
         Invoke-Utility git config pull.rebase true
         Invoke-Utility git pull origin $MainGitBranch --tag
+
         # Look at the tags on latest commit for origin/$MainGitBranch (assume we're on detached head)
         Write-Build DarkGray "git rev-parse origin/$MainGitBranch"
-        $MainHeadCommit = git 'rev-parse' "origin/$MainGitBranch"
-        Write-Build DarkGray "git tag -l --points-at $MainHeadCommit"
-        $TagsAtCurrentPoint = git tag -l --points-at $MainHeadCommit
-        Write-Build DarkGray ($TagsAtCurrentPoint -join '|')
+        $mainHeadCommit = git 'rev-parse' "origin/$MainGitBranch"
+
+        Write-Build DarkGray "git tag -l --points-at $mainHeadCommit"
+        $tagsAtCurrentPoint = git tag -l --points-at $mainHeadCommit
+
+        Write-Build DarkGray ($tagsAtCurrentPoint -join '|')
 
         Invoke-Utility git push origin --tags
     }
@@ -152,7 +158,7 @@ task UpdateTag -if ($PAT) {
     }
 }
 
-task SetChangeLog -if ($PAT) {
+task CreateChangelogReleaseOutput -if ($PAT) {
 
     . Set-SamplerTaskVariable
 
@@ -170,7 +176,7 @@ task SetChangeLog -if ($PAT) {
     Invoke-Utility git config user.email $GitHubConfigUserEmail
 
     $ChangelogPath = Get-SamplerAbsolutePath -Path $ChangeLogPath -RelativeTo $ProjectPath
-    "`Changelog Path                 = '$ChangeLogPath'"
+    "`Changelog Path '$ChangeLogPath'"
 
     try
     {
@@ -186,74 +192,45 @@ task SetChangeLog -if ($PAT) {
         Invoke-Utility git config pull.rebase true
         Invoke-Utility git pull origin $MainGitBranch --tag
 
-        # Look at the tags on latest commit for origin/$MainGitBranch (assume we're on detached head)
-        #Write-Build DarkGray "git rev-parse origin/$MainGitBranch"
-        #$MainHeadCommit = Invoke-Utility git rev-parse origin/$MainGitBranch
-        $MainHeadCommit = git log -n 1 --pretty=format:"%H"
-        Write-Build DarkGray "git tag -l --points-at $MainHeadCommit"
-        $TagsAtCurrentPoint = Invoke-Utility git tag -l --points-at $MainHeadCommit
-        Write-Build DarkGray ($TagsAtCurrentPoint -join '|')
+        $mainHeadCommit = git log -n 1 --pretty=format:"%H"
+        Write-Build DarkGray "git tag -l --points-at $mainHeadCommit"
+        $tagsAtCurrentPoint = Invoke-Utility git tag -l --points-at $mainHeadCommit
+        Write-Build DarkGray ($tagsAtCurrentPoint -join '|')
 
         # Only Update changelog if last commit is a full release
         if ($UpdateChangelogOnPrerelease)
         {
-            $TagVersion = [string]($TagsAtCurrentPoint | Select-Object -First 1)
-            Write-Build Green "Updating Changelog for PRE-Release $TagVersion"
+            $tagVersion = [string]($tagsAtCurrentPoint | Select-Object -First 1)
+            Write-Build Green "Updating Changelog for PRE-Release '$tagVersion'"
         }
-        elseif ($TagVersion = [string]($TagsAtCurrentPoint.Where{ $_ -notMatch 'v.*\-' }))
+        elseif ($TagVersion = [string]($tagsAtCurrentPoint.Where{ $_ -notMatch 'v.*\-' }))
         {
-            Write-Build Green "Updating the ChangeLog for release $TagVersion"
+            Write-Build Green "Updating the ChangeLog for release '$tagVersion'"
         }
         else
         {
-            Write-Build Yellow "No Release Tag found to update the ChangeLog from in '$TagsAtCurrentPoint'"
+            Write-Build Yellow "No Release Tag found to update the ChangeLog from in '$tagsAtCurrentPoint'"
             return
         }
     }
     catch
     {
-        Write-Error 'GitError'
+        Write-Error 'Error updating changelog and generating release information.'
     }
-    #$BranchName = "updateChangelogAfter$TagVersion"
-    #Write-Build DarkGray "Creating branch $BranchName"
-
-    #git checkout -B $BranchName
 
     try
     {
-        Write-Build DarkGray "Updating Changelog file"
+        Write-Build DarkGray 'Updating Changelog file'
         Update-Changelog -ReleaseVersion ($TagVersion -replace '^v') -LinkMode None -Path $ChangelogPath -ErrorAction SilentlyContinue
-        git add $GitHubFilesToAdd
-        git commit -m "Updating ChangeLog since $TagVersion +semver:skip"
+        Invoke-Utility git add $GitHubFilesToAdd
+        Invoke-Utility git commit -m "Updating ChangeLog since $tagVersion +semver:skip"
 
-        #$remoteURL = [URI](git remote get-url origin)
-        #$repoInfo = Get-GHOwnerRepoFromRemoteUrl -RemoteUrl $remoteURL
+        Invoke-Utility git push
 
-        #$URI = $remoteURL.Scheme + [URI]::SchemeDelimiter + $GitHubToken + '@' + $remoteURL.Authority + $remoteURL.PathAndQuery
-
-        # Update the PUSH URI to use the Personal Access Token for Auth
-        #git remote set-url --push origin $URI
-
-        # track this branch on the remote 'origin
-        git push #-u origin $BranchName
-
-        #$NewPullRequestParams = @{
-        #    AccessToken         = $GitHubToken
-        #    OwnerName           = $repoInfo.Owner
-        #    RepositoryName      = $repoInfo.Repository
-        #    Title               = "Updating ChangeLog since release of $TagVersion"
-        #    Head                = $BranchName
-        #    Base                = $MainGitBranch
-        #    ErrorAction         = 'Stop'
-        #    MaintainerCanModify = $true
-        #}
-
-        #$Response = New-GitHubPullRequest @NewPullRequestParams
-        #Write-Build Green "`n --> PR #$($Response.number) opened: $($Response.url)"
         Write-Build Green 'Changelog changes pushed'
     }
     catch
     {
-        Write-Build Red "Error trying to create ChangeLog Pull Request. Ignoring.`r`n $_"
+        Write-Build Red "Error pushing the changelog: $_"
     }
 }

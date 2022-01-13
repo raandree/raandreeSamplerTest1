@@ -68,8 +68,8 @@ BuildWorkflow:
     #- Merge_CodeCoverage_Files
 
   publish:
-    - UpdateTag
-    - SetChangeLog
+    - UpdateGitTag
+    - CreateChangelogReleaseOutput
     - publish_module_to_gallery
     - Publish_Release_To_GitHub
 

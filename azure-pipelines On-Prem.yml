@@ -1,0 +1,268 @@
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    exclude:
+    - CHANGELOG.md
+  tags:
+    include:
+    - "v*"
+    exclude:
+    - "*-*"
+
+variables:
+  buildFolderName: output
+  buildArtifactName: output
+  testResultFolderName: testResults
+  defaultBranch: main
+  PSModuleFeed: PowerShell
+  GalleryApiToken: NA
+  RepositoryUri: https://dscdo01.contoso.com:8080/AutomatedLab/_packaging/PowerShell/nuget/v2 #will be replaced during DscWorkshop lab deployment
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Package_Module
+        displayName: 'Package Module'
+        pool:
+          name: Default
+        workspace:
+          clean: all
+        steps:
+          - task: GitVersion@5
+            name: gitVersion
+            displayName: 'Evaluate Next Version'
+            inputs:
+              runtime: 'full'
+              configFilePath: 'GitVersion.yml'
+
+          - task: PowerShell@2
+            name: displayEnvironmentVariables
+            displayName: 'Display Environment Variables'
+            inputs:
+              targetType: 'inline'
+              script: |
+                dir -Path env: | Out-String | Write-Host
+
+          - task: PowerShell@2
+            displayName: Register PowerShell Gallery
+            inputs:
+              targetType: inline
+              script: |
+                #always make sure the local PowerShell Gallery is registered correctly
+                [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+                $uri = '$(RepositoryUri)'
+                $name = 'PowerShell'
+                $r = Get-PSRepository -Name $name -ErrorAction SilentlyContinue
+                if (-not $r -or $r.SourceLocation -ne $uri -or $r.PublishLocation -ne $uri) {
+                    Write-Host "The Source or PublishLocation of the repository '$name' is not correct or the repository is not registered"
+                    Unregister-PSRepository -Name $name -ErrorAction SilentlyContinue
+                    Register-PSRepository -Name $name -SourceLocation $uri -PublishLocation $uri -InstallationPolicy Trusted
+                    Get-PSRepository
+                }
+
+          - task: PowerShell@2
+            name: package
+            displayName: 'Build & Package Module'
+            inputs:
+              filePath: './build.ps1'
+              arguments: '-ResolveDependency -tasks pack'
+            env:
+              ModuleVersion: $(gitVersion.NuGetVersionV2)
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Build Artifact'
+            inputs:
+              PathtoPublish: '$(buildFolderName)/'
+              ArtifactName: $(buildArtifactName)
+
+  - stage: Test
+    dependsOn: Build
+
+    jobs:
+      - job: Test_HQRM
+        displayName: 'HQRM'
+        pool:
+          name: Default
+        workspace:
+          clean: all
+        timeoutInMinutes: 0
+        steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download Build Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              downloadPath: $(Build.SourcesDirectory)
+
+          - task: PowerShell@2
+            name: test
+            displayName: 'Run HQRM Test'
+            inputs:
+              filePath: './build.ps1'
+              arguments: '-Tasks hqrmtest'
+              pwsh: false
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            inputs:
+              testResultsFormat: 'NUnit'
+              testResultsFiles: '$(buildFolderName)/$(testResultFolderName)/NUnit*.xml'
+              testRunTitle: 'HQRM'
+            condition: succeededOrFailed()
+
+      - job: test_windows_ps
+        displayName: 'Unit (Windows PowerShell)'
+        timeoutInMinutes: 0
+        pool:
+          name: Default
+        workspace:
+          clean: all
+        steps:
+          - task: PowerShell@2
+            name: displayEnvironmentVariables
+            displayName: 'Display Environment Variables'
+            inputs:
+              targetType: 'inline'
+              script: |
+                dir -Path env: | Out-String | Write-Host
+
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download Build Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              downloadPath: $(Build.SourcesDirectory)
+
+          - task: PowerShell@2
+            name: test
+            displayName: 'Run Tests'
+            inputs:
+              filePath: './build.ps1'
+              arguments: '-tasks test'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: 'NUnit'
+              testResultsFiles: '$(buildFolderName)/$(testResultFolderName)/NUnit*.xml'
+              testRunTitle: 'Windows (Windows PowerShell)'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Test Artifact'
+            inputs:
+              PathtoPublish: '$(buildFolderName)/$(testResultFolderName)/'
+              ArtifactName: 'CodeCoverageWinPS51'
+              publishLocation: 'Container'
+
+      # If no code coverage should be reported, then this entire removed:
+      - job: Code_Coverage
+        displayName: 'Publish Code Coverage'
+        dependsOn:
+          - test_windows_ps
+        pool:
+          name: Default
+        timeoutInMinutes: 0
+        steps:
+          - powershell: |
+              $repositoryOwner,$repositoryName = $env:BUILD_REPOSITORY_NAME -split '/'
+              echo "##vso[task.setvariable variable=RepositoryOwner;isOutput=true]$repositoryOwner"
+              echo "##vso[task.setvariable variable=RepositoryName;isOutput=true]$repositoryName"
+            name: dscBuildVariable
+            displayName: 'Set Environment Variables'
+
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download Pipeline Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              downloadPath: '$(Build.SourcesDirectory)/$(buildArtifactName)'
+
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download Test Artifact Windows (PS 5.1)'
+            inputs:
+              buildType: 'current'
+              artifactName: 'CodeCoverageWinPS51'
+              downloadPath: '$(Build.SourcesDirectory)/$(buildFolderName)/$(testResultFolderName)'
+
+          # Make sure to update build.yaml to support these tasks, then uncomment these tasks:
+          #- task: PowerShell@2
+          #  name: merge
+          #  displayName: 'Merge Code Coverage files'
+          #  inputs:
+          #    filePath: './build.ps1'
+          #    arguments: '-tasks merge'
+          #    pwsh: true
+          #- task: PublishCodeCoverageResults@1
+          #  displayName: 'Publish Azure Code Coverage'
+          #  inputs:
+          #    codeCoverageTool: 'JaCoCo'
+          #    summaryFileLocation: '$(buildFolderName)/$(testResultFolderName)/JaCoCo_coverage.xml'
+          #    pathToSources: '$(Build.SourcesDirectory)/$(dscBuildVariable.RepositoryName)/'
+
+          # Uncomment if Codecov.io should be used (see docs at Codecov.io how to use and the required repository configuration).
+          #- script: |
+          #    bash <(curl -s https://codecov.io/bash) -f "./$(buildFolderName)/$(testResultFolderName)/JaCoCo_coverage.xml"
+          #  displayName: 'Publish Code Coverage to Codecov.io'
+
+  - stage: Deploy
+    dependsOn: Test
+    # Only execute deploy stage if we're on main and previous stage succeeded
+    condition: |
+      and(
+        succeeded(),
+        or(
+          eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+          startsWith(variables['Build.SourceBranch'], 'refs/tags/')
+        )
+      )
+    jobs:
+      - job: Deploy_Module
+        displayName: 'Deploy Module'
+        pool:
+          name: Default
+        steps:
+
+          - task: PowerShell@2
+            name: displayEnvironmentVariables
+            displayName: 'Display Environment Variables'
+            inputs:
+              targetType: 'inline'
+              script: |
+                dir -Path env: | Out-String | Write-Host
+            env:
+              PAT: $(PAT)
+              GalleryApiToken: $(GalleryApiToken)
+              ReleaseBranch: $(defaultBranch)
+              MainGitBranch: $(defaultBranch)
+
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download Build Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              downloadPath: '$(Build.SourcesDirectory)'
+
+          - task: PowerShell@2
+            name: publishRelease
+            displayName: 'Publish Release'
+            inputs:
+              filePath: './build.ps1'
+              arguments: '-tasks publish'
+            env:
+              PAT: $(PAT)
+              GalleryApiToken: $(GalleryApiToken)
+              ReleaseBranch: $(defaultBranch)
+              MainGitBranch: $(defaultBranch)
+          #- task: PowerShell@2
+          #  name: sendChangelogPR
+          #  displayName: 'Send Changelog PR'
+          #  inputs:
+          #    filePath: './build.ps1'
+          #    arguments: '-tasks Create_ChangeLog_GitHub_PR'
+          #  env:
+          #    GitHubToken: $(GitHubToken)
+          #    ReleaseBranch: $(defaultBranch)
+          #    MainGitBranch: $(defaultBranch)

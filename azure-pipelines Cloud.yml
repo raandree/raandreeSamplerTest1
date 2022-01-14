@@ -1,0 +1,324 @@
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    exclude:
+    - CHANGELOG.md
+  tags:
+    include:
+    - "v*"
+    exclude:
+    - "*-*"
+
+variables:
+  buildFolderName: output
+  buildArtifactName: output
+  testResultFolderName: testResults
+  defaultBranch: main
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Package_Module
+        displayName: 'Package Module'
+        pool:
+          vmImage: 'ubuntu 18.04'
+        steps:
+          - task: GitVersion@5
+            name: gitVersion
+            displayName: 'Evaluate Next Version'
+            inputs:
+              runtime: 'core'
+              configFilePath: 'GitVersion.yml'
+
+          - task: PowerShell@2
+            name: package
+            displayName: 'Build & Package Module'
+            inputs:
+              filePath: './build.ps1'
+              arguments: '-ResolveDependency -tasks pack'
+              pwsh: true
+            env:
+              ModuleVersion: $(gitVersion.NuGetVersionV2)
+
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish Build Artifact'
+            inputs:
+              targetPath: '$(buildFolderName)/'
+              artifact: $(buildArtifactName)
+              publishLocation: 'pipeline'
+              parallel: true
+
+          - task: PowerShell@2
+            name: displayEnvironmentVariables
+            displayName: 'Display Environment Variables'
+            inputs:
+              targetType: 'inline'
+              script: |
+                dir -Path env: | Out-String | Write-Host
+
+  - stage: Test
+    dependsOn: Build
+    jobs:
+      - job: Test_HQRM
+        displayName: 'HQRM'
+        pool:
+          vmImage: 'windows-2019'
+        timeoutInMinutes: 0
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Pipeline Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              targetPath: '$(Build.SourcesDirectory)/$(buildArtifactName)'
+
+          - task: PowerShell@2
+            name: test
+            displayName: 'Run HQRM Test'
+            inputs:
+              filePath: './build.ps1'
+              arguments: '-Tasks hqrmtest'
+              pwsh: false
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            inputs:
+              testResultsFormat: 'NUnit'
+              testResultsFiles: '$(buildFolderName)/$(testResultFolderName)/NUnit*.xml'
+              testRunTitle: 'HQRM'
+            condition: succeededOrFailed()
+
+      - job: Test_Unit_2016
+        displayName: 'Unit (Windows Server 2016)'
+        pool:
+          vmImage: 'vs2017-win2016'
+        timeoutInMinutes: 0
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Pipeline Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              targetPath: '$(Build.SourcesDirectory)/$(buildArtifactName)'
+
+          - task: PowerShell@2
+            name: test
+            displayName: 'Run Unit Test'
+            inputs:
+              filePath: './build.ps1'
+              arguments: "-Tasks test -PesterScript 'tests/Unit'"
+              pwsh: false
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            inputs:
+              testResultsFormat: 'NUnit'
+              testResultsFiles: '$(buildFolderName)/$(testResultFolderName)/NUnit*.xml'
+              testRunTitle: 'Unit (Windows Server 2016)'
+            condition: succeededOrFailed()
+
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish Test Artifact'
+            inputs:
+              targetPath: '$(buildFolderName)/$(testResultFolderName)/'
+              artifactName: $(testArtifactName)
+              parallel: true
+
+      - job: Code_Coverage
+        displayName: 'Publish Code Coverage'
+        dependsOn: Test_Unit_2016
+        pool:
+          vmImage: 'ubuntu 18.04'
+        timeoutInMinutes: 0
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Pipeline Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              targetPath: '$(Build.SourcesDirectory)/$(buildArtifactName)'
+
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Test Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(testArtifactName)
+              targetPath: '$(Build.SourcesDirectory)/$(buildFolderName)/$(testResultFolderName)'
+
+          - task: PublishCodeCoverageResults@1
+            displayName: 'Publish Code Coverage to Azure DevOps'
+            inputs:
+              codeCoverageTool: 'JaCoCo'
+              summaryFileLocation: '$(Build.SourcesDirectory)/$(buildFolderName)/$(testResultFolderName)/JaCoCo_coverage.xml'
+              pathToSources: '$(Build.SourcesDirectory)/$(sourceFolderName)/'
+
+          - script: |
+              bash <(curl -s https://codecov.io/bash) -f "./$(buildFolderName)/$(testResultFolderName)/JaCoCo_coverage.xml"
+            displayName: 'Publish Code Coverage to Codecov.io'
+
+      - job: Test_Integration_2016
+        displayName: 'Integration (Windows Server 2016)'
+        pool:
+          vmImage: 'vs2017-win2016'
+        timeoutInMinutes: 0
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Pipeline Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              targetPath: '$(Build.SourcesDirectory)/$(buildArtifactName)'
+
+          - task: PowerShell@2
+            name: configureWinRM
+            displayName: 'Configure WinRM'
+            inputs:
+              targetType: 'inline'
+              script: 'winrm quickconfig -quiet'
+              pwsh: false
+
+          - powershell: |
+              Set-Service -Name wuauserv -StartupType Manual -Verbose
+              Start-Service -name wuauserv -Verbose
+
+          - task: PowerShell@2
+            name: test
+            displayName: 'Run Integration Test'
+            inputs:
+              filePath: './build.ps1'
+              arguments: "-Tasks test -PesterScript 'tests/Integration' -CodeCoverageThreshold 0"
+              pwsh: false
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            inputs:
+              testResultsFormat: 'NUnit'
+              testResultsFiles: '$(buildFolderName)/$(testResultFolderName)/NUnit*.xml'
+              testRunTitle: 'Integration (Windows Server 2016)'
+            condition: succeededOrFailed()
+
+      - job: Test_Unit_2019
+        displayName: 'Unit (Windows Server 2019)'
+        pool:
+          vmImage: 'windows-2019'
+        timeoutInMinutes: 0
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Pipeline Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              targetPath: '$(Build.SourcesDirectory)/$(buildArtifactName)'
+
+          - task: PowerShell@2
+            name: test
+            displayName: 'Run Unit Test'
+            inputs:
+              filePath: './build.ps1'
+              arguments: "-Tasks test -PesterScript 'tests/Unit'"
+              pwsh: false
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            inputs:
+              testResultsFormat: 'NUnit'
+              testResultsFiles: '$(buildFolderName)/$(testResultFolderName)/NUnit*.xml'
+              testRunTitle: 'Unit (Windows Server 2019)'
+            condition: succeededOrFailed()
+
+      - job: Test_Integration_2019
+        displayName: 'Integration (Windows Server 2019)'
+        pool:
+          vmImage: 'windows-2019'
+        timeoutInMinutes: 0
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Pipeline Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              targetPath: '$(Build.SourcesDirectory)/$(buildArtifactName)'
+
+          - task: PowerShell@2
+            name: configureWinRM
+            displayName: 'Configure WinRM'
+            inputs:
+              targetType: 'inline'
+              script: 'winrm quickconfig -quiet'
+              pwsh: false
+
+          - task: PowerShell@2
+            name: test
+            displayName: 'Run Integration Test'
+            inputs:
+              filePath: './build.ps1'
+              arguments: "-Tasks test -PesterScript 'tests/Integration' -CodeCoverageThreshold 0"
+              pwsh: false
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            inputs:
+              testResultsFormat: 'NUnit'
+              testResultsFiles: '$(buildFolderName)/$(testResultFolderName)/NUnit*.xml'
+              testRunTitle: 'Integration (Windows Server 2019)'
+            condition: succeededOrFailed()
+
+  - stage: Deploy
+    dependsOn: Test
+    jobs:
+      - job: Deploy_Module
+        displayName: 'Deploy Module'
+        pool:
+          vmImage: 'ubuntu 18.04'
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Build Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              targetPath: '$(Build.SourcesDirectory)/$(buildFolderName)'
+
+          - task: PowerShell@2
+            name: displayEnvironmentVariables
+            displayName: 'Display Environment Variables'
+            inputs:
+              targetType: 'inline'
+              script: |
+                dir -Path env: | Out-String | Write-Host
+            env:
+              PAT: $(PAT)
+              GalleryApiToken: $(GalleryApiToken)
+              ReleaseBranch: $(defaultBranch)
+              MainGitBranch: $(defaultBranch)
+
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download Build Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: $(buildArtifactName)
+              downloadPath: '$(Build.SourcesDirectory)'
+
+          - task: PowerShell@2
+            name: publishRelease
+            displayName: 'Publish Release'
+            inputs:
+              filePath: './build.ps1'
+              arguments: '-tasks publish'
+            env:
+              PAT: $(PAT)
+              GalleryApiToken: $(GalleryApiToken)
+              ReleaseBranch: $(defaultBranch)
+              MainGitBranch: $(defaultBranch)
+          #- task: PowerShell@2
+          #  name: sendChangelogPR
+          #  displayName: 'Send Changelog PR'
+          #  inputs:
+          #    filePath: './build.ps1'
+          #    arguments: '-tasks Create_ChangeLog_GitHub_PR'
+          #    pwsh: true
+          #  env:
+          #    GitHubToken: $(GitHubToken)
+          #    ReleaseBranch: $(defaultBranch)
+          #    MainGitBranch: $(defaultBranch)

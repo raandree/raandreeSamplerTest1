@@ -173,14 +173,14 @@ task CreateChangelogReleaseOutput -if ($PAT) {
             # Variable is not set in context, use $BuildInfo.GitHubConfig.<varName>
             $configValue = $BuildInfo.GitHubConfig.($gitHubConfigKey)
             Set-Variable -Name $gitHubConfigKey -Value $configValue
-            Write-Build DarkGray "`t...Set $gitHubConfigKey to $configValue"
+            Write-Build DarkGray "`t...Set $gitHubConfigKey to '$configValue'"
         }
     }
     Invoke-Utility git config user.name $GitHubConfigUserName
     Invoke-Utility git config user.email $GitHubConfigUserEmail
 
-    $ChangelogPath = Get-SamplerAbsolutePath -Path $ChangeLogPath -RelativeTo $ProjectPath
-    "`Changelog Path '$ChangeLogPath'"
+    $changelogPath = Get-SamplerAbsolutePath -Path $ChangeLogPath -RelativeTo $ProjectPath
+    Write-Build DarkGray "`Changelog Path '$changeLogPath'"
 
     try
     {

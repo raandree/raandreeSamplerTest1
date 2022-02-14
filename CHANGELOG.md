@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pipeline files
 - New Change Feb 2022
 
+### Fixes
+
+- Az Pipeline now on 2019
+
 ## [0.5.1] - 2022-01-14
 
 ### Fixes

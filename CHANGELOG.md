@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 
 - Az Pipeline now on 2019
+- Az Pipeline now on 2022
 
 ## [0.5.1] - 2022-01-14
 

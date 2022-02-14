@@ -102,7 +102,7 @@ task UpdateGitTag -if ($PAT) {
             # Variable is not set in context, use $BuildInfo.GitHubConfig.<varName>
             $configValue = $BuildInfo.GitHubConfig.($gitHubConfigKey)
             Set-Variable -Name $gitHubConfigKey -Value $configValue
-            Write-Build DarkGray "`t...Set $gitHubConfigKey to $configValue"
+            Write-Build DarkGray "`t...Set $gitHubConfigKey to '$configValue'"
         }
     }
     Invoke-Utility git config user.name $GitHubConfigUserName
@@ -116,9 +116,9 @@ task UpdateGitTag -if ($PAT) {
 
         $env:GCM_PROVIDER = 'generic'
         Invoke-Utility git fetch --all --tags
-        Invoke-Utility git ls-remote --tags origin
+        #Invoke-Utility git ls-remote --tags origin
 
-        $existingTags = try
+        $existingTag = try
         {
             Invoke-Utility git describe --tags
         }
@@ -128,9 +128,13 @@ task UpdateGitTag -if ($PAT) {
         }
 
         $releaseTag = "v$ModuleVersion"
-        if ($existingTags -notcontains $releaseTag)
+        if ($existingTag -ne $releaseTag)
         {
             Invoke-Utility git tag $releaseTag
+        }
+        else
+        {
+            Write-Build Red "The tag '$releaseTag' does already exist"
         }
 
         Invoke-Utility git config pull.rebase true

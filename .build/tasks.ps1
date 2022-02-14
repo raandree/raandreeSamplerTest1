@@ -110,13 +110,19 @@ task UpdateGitTag -if ($PAT) {
 
     try
     {
-        $patBase64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f 'PAT', $PAT)))
+        $patBase64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(('{0}:{1}' -f 'PAT', $PAT)))
         Invoke-Utility git config http.extraheader "Authorization: Basic $patBase64"
         Invoke-Utility git config http.sslVerify false
 
         $env:GCM_PROVIDER = 'generic'
         Invoke-Utility git fetch --all --tags
         #Invoke-Utility git ls-remote --tags origin
+
+        $currentBranch = Invoke-Utility git branch --format='%(refname:short)'
+        if ($currentBranch -ne $MainGitBranch)
+        {
+            git checkout $MainGitBranch
+        }
 
         $existingTag = try
         {
@@ -184,19 +190,18 @@ task CreateChangelogReleaseOutput -if ($PAT) {
 
     try
     {
-        $patBase64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f 'PAT', $PAT)))
         Invoke-Utility git config http.extraheader "Authorization: Basic $patBase64"
         Invoke-Utility git config http.sslVerify false
 
-        $currentBranch = git branch --format='%(refname:short)'
+        $currentBranch = Invoke-Utility git branch --format='%(refname:short)'
         if ($currentBranch -ne $MainGitBranch)
         {
-            git checkout $MainGitBranch
+            Invoke-Utility git checkout $MainGitBranch | Out-Null
         }
         Invoke-Utility git config pull.rebase true
         Invoke-Utility git pull origin $MainGitBranch --tag
 
-        $mainHeadCommit = git log -n 1 --pretty=format:"%H"
+        $mainHeadCommit = Invoke-Utility git log -n 1 --pretty=format:"%H"
         Write-Build DarkGray "git tag -l --points-at $mainHeadCommit"
         $tagsAtCurrentPoint = Invoke-Utility git tag -l --points-at $mainHeadCommit
         Write-Build DarkGray ($tagsAtCurrentPoint -join '|')
@@ -219,7 +224,7 @@ task CreateChangelogReleaseOutput -if ($PAT) {
     }
     catch
     {
-        Write-Error 'Error updating changelog and generating release information.'
+        Write-Error "Error updating changelog and generating release information: $($_.Exception.Message)"
     }
 
     try

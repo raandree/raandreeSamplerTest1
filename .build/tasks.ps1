@@ -190,6 +190,7 @@ task CreateChangelogReleaseOutput -if ($PAT) {
 
     try
     {
+        $patBase64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(('{0}:{1}' -f 'PAT', $PAT)))
         Invoke-Utility git config http.extraheader "Authorization: Basic $patBase64"
         Invoke-Utility git config http.sslVerify false
 

@@ -16,4 +16,6 @@ New change
 
 Fixed something for 0.5.3
 
+New Minor Version
+
 ## Make it yours

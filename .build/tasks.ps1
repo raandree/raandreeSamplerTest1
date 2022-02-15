@@ -51,6 +51,7 @@ param
     $MainGitBranch = (property MainGitBranch 'main')
 )
 
+#TODO: Replace with https://github.com/dsccommunity/PSNativeCmdDevKit/search?q=Invoke-NativeCommand
 function Invoke-Utility
 {
     <#
@@ -110,22 +111,27 @@ task UpdateGitTag -if ($PAT) {
 
     try
     {
+        Write-Build DarkGray "Setting 'extraheader Authorization: Basic' and using the personal access token"
         $patBase64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(('{0}:{1}' -f 'PAT', $PAT)))
         Invoke-Utility git config http.extraheader "Authorization: Basic $patBase64"
         Invoke-Utility git config http.sslVerify false
 
         $env:GCM_PROVIDER = 'generic'
-        Invoke-Utility git fetch --all --tags
-        #Invoke-Utility git ls-remote --tags origin
+        Write-Build DarkGray "Calling 'git fetch --all --tags'"
+        Invoke-Utility git fetch --all --tags | Out-Null
 
         $currentBranch = Invoke-Utility git branch --format='%(refname:short)'
+        Write-Build DarkGray "Current branch is '$currentBranch'"
         if ($currentBranch -ne $MainGitBranch)
         {
-            git checkout $MainGitBranch
+            Write-Build DarkGray "Switching branch to '$MainGitBranch'"
+            git checkout $MainGitBranch | Out-Null
         }
 
-        $existingTag = try
+        $allTags = Invoke-Utility git tag
+        $currentBranchTag = try
         {
+            Write-Build DarkGray "Fetching tags: 'git describe --tags'"
             Invoke-Utility git describe --tags
         }
         catch
@@ -133,18 +139,23 @@ task UpdateGitTag -if ($PAT) {
             Write-Build Yellow "`t...No tags to read."
         }
 
+        Write-Build DarkGray "Setting 'pull.rebase true'"
+        Invoke-Utility git config pull.rebase true
+        Write-Build DarkGray "Pulling tags from branch '$MainGitBranch'"
+        Invoke-Utility git pull origin $MainGitBranch --tag | Out-Null
+
         $releaseTag = "v$ModuleVersion"
-        if ($existingTag -ne $releaseTag)
+        Write-Build DarkGray "Release tag is '$releaseTag'"
+        if ($currentBranchTag -ne $releaseTag -and $allTags -notcontains $releaseTag)
         {
+            Write-Build DarkGray "Writing tag: 'git tag $releaseTag'"
             Invoke-Utility git tag $releaseTag
         }
         else
         {
-            Write-Build Red "The tag '$releaseTag' does already exist"
+            Write-Error -Message "The tag '$releaseTag' does already exist"
+            return
         }
-
-        Invoke-Utility git config pull.rebase true
-        Invoke-Utility git pull origin $MainGitBranch --tag
 
         # Look at the tags on latest commit for origin/$MainGitBranch (assume we're on detached head)
         Write-Build DarkGray "git rev-parse origin/$MainGitBranch"
@@ -155,6 +166,7 @@ task UpdateGitTag -if ($PAT) {
 
         Write-Build DarkGray ($tagsAtCurrentPoint -join '|')
 
+        Write-Build DarkGray "Pushing tag: 'git push origin --tags'"
         Invoke-Utility git push origin --tags
     }
     catch

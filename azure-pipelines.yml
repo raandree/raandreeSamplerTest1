@@ -309,6 +309,7 @@ stages:
             env:
               PAT: $(PAT)
               GalleryApiToken: $(GalleryApiToken)
+              GitHubToken: $(GitHubToken)
               ReleaseBranch: $(defaultBranch)
               MainGitBranch: $(defaultBranch)
           #- task: PowerShell@2

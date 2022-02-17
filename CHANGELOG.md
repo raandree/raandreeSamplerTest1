@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - New Minor Version
 - wip
+- test release 0.6.0
 
 ## [0.5.3] - 2022-02-14
 

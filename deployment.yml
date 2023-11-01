@@ -1,0 +1,28 @@
+stages:
+  - stage: PrepareWorker
+    jobs:
+      - job: PrepareWorker
+        displayName: 'Download requirements'
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - pwsh: |
+              Install-Module -Name raandreeSamplerTest1 -AllowPrerelease
+            displayName: Download module
+
+  - stage: Deployment
+    dependsOn: PrepareWorker
+    jobs:
+      - job: Deployment
+        displayName: 'Deployment of new machine'
+        timeoutInMinutes: 0
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - pwsh: |
+              dir c:\
+            displayName: Start deployment
+
+          - pwsh: |
+              Get-Date
+            displayName: Check deployment

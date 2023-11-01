@@ -17,6 +17,10 @@ Describe Get-Something {
 
             $date.ToString() | Should -Be "The date is $($now.ToString())"
         }
+
+        It 'Should not throw' {
+            { Get-MyDate } | Should -Not -Throw
+        }
     }
 
 }

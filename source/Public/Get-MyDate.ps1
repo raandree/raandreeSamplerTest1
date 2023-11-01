@@ -23,9 +23,4 @@ function Get-MyDate
 
     $d = Get-Date
     "The date is $($d.ToString())"
-
-    if ($d -eq 123)
-    {
-        Write-Host 'x'
-    }
 }

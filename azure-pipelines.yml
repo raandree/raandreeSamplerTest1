@@ -254,7 +254,7 @@ stages:
       - job: Deploy_Module
         displayName: 'Deploy Module'
         pool:
-          vmImage: 'ubuntu-latest'
+          vmImage: windows-latest
         steps:
           - task: DownloadPipelineArtifact@2
             displayName: 'Download Build Artifact'

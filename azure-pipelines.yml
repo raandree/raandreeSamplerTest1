@@ -262,6 +262,14 @@ stages:
               buildType: 'current'
               artifactName: $(buildArtifactName)
               targetPath: '$(Build.SourcesDirectory)/$(buildFolderName)'
+
+          - task: DotNetCoreCLI@2
+            inputs:
+              command: custom
+              custom: tool
+              arguments: install --global azuresigntool
+            displayName: Install AzureSignTool
+
           - task: PowerShell@2
             name: publishRelease
             displayName: 'Publish Release'
@@ -275,6 +283,7 @@ stages:
               ReleaseBranch: $(defaultBranch)
               MainGitBranch: $(defaultBranch)
               AzureKeyVaultAppSecret: $(AzureKeyVaultAppSecret)
+
           - task: PowerShell@2
             name: sendChangelogPR
             displayName: 'Send Changelog PR'

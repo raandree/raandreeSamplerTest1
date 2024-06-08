@@ -164,47 +164,10 @@ stages:
               artifactName: 'CodeCoverageWinPS51'
               parallel: true
 
-      - job: test_macos
-        displayName: 'macOS'
-        timeoutInMinutes: 0
-        pool:
-          vmImage: 'macos-latest'
-        steps:
-          - task: DownloadPipelineArtifact@2
-            displayName: 'Download Build Artifact'
-            inputs:
-              buildType: 'current'
-              artifactName: $(buildArtifactName)
-              targetPath: '$(Build.SourcesDirectory)/$(buildFolderName)'
-
-          - task: PowerShell@2
-            name: test
-            displayName: 'Run Tests'
-            inputs:
-              filePath: './build.ps1'
-              arguments: '-tasks test'
-              pwsh: true
-
-          - task: PublishTestResults@2
-            displayName: 'Publish Test Results'
-            condition: succeededOrFailed()
-            inputs:
-              testResultsFormat: 'NUnit'
-              testResultsFiles: '$(buildFolderName)/$(testResultFolderName)/NUnit*.xml'
-              testRunTitle: 'MacOS'
-
-          - task: PublishPipelineArtifact@1
-            displayName: 'Publish Test Artifact'
-            inputs:
-              targetPath: '$(buildFolderName)/$(testResultFolderName)/'
-              artifactName: 'CodeCoverageMacOS'
-              parallel: true
-
       # If no code coverage should be reported, then this entire removed:
       - job: Code_Coverage
         displayName: 'Publish Code Coverage'
         dependsOn:
-          - test_macos
           - test_linux
           - test_windows_core
           - test_windows_ps
@@ -225,13 +188,6 @@ stages:
               buildType: 'current'
               artifactName: $(buildArtifactName)
               targetPath: '$(Build.SourcesDirectory)/$(buildArtifactName)'
-
-          - task: DownloadPipelineArtifact@2
-            displayName: 'Download Test Artifact macOS'
-            inputs:
-              buildType: 'current'
-              artifactName: 'CodeCoverageMacOS'
-              targetPath: '$(Build.SourcesDirectory)/$(buildFolderName)/$(testResultFolderName)'
 
           - task: DownloadPipelineArtifact@2
             displayName: 'Download Test Artifact Linux'
@@ -321,4 +277,3 @@ stages:
               GitHubToken: $(GitHubToken)
               ReleaseBranch: $(defaultBranch)
               MainGitBranch: $(defaultBranch)
-

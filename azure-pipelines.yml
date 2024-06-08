@@ -37,6 +37,14 @@ stages:
             displayName: Calculate ModuleVersion (GitVersion)
 
           - task: PowerShell@2
+            name: displayEnvVariables
+            displayName: 'Display Environment Variables'
+            inputs:
+              targetType: inline
+              script: |
+                dir -Path env: | Format-Table -Property Name, Value -AutoSize | Out-String | Write-Host
+
+          - task: PowerShell@2
             name: package
             displayName: 'Build & Package Module'
             inputs:

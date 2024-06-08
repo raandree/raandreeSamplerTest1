@@ -9,6 +9,8 @@
 BuiltModuleSubdirectory: module
 CopyPaths:
   - en-US
+  - test1.txt
+  - test2.txt
 #  - DSCResources
   # - Modules
 Encoding: UTF8
@@ -56,6 +58,7 @@ BuildWorkflow:
 
   pack:
     - build
+    - Sign
     - package_module_nupkg
 
 
@@ -151,3 +154,13 @@ TaskHeader: |
   Write-Build DarkGray "  $Path"
   Write-Build DarkGray "  $($Task.InvocationInfo.ScriptName):$($Task.InvocationInfo.ScriptLineNumber)"
   ""
+
+CodeSigning:
+  AzureKeyVault:
+    Url: https://kv1111.vault.azure.net
+    ApplicationId: bad81edd-bbbe-48c7-a355-bd146e4f7197
+    CertificateName: Sign
+    TimeStampServerUrl: http://timestamp.digicert.com
+  FileSelection:
+    #FilePaths: [test1.txt, test2.txt]
+    Filters: ['*.psm1', '*.psd1']

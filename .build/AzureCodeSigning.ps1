@@ -49,6 +49,6 @@ task Sign -if ($AzureKeyVaultAppSecret) {
     foreach ($file in $files)
     {
         Write-Build DarkGray "Signing file '$($file.FullName)'"
-        AzureSignTool.exe sign -kvu $BuildInfo.CodeSigning.AzureKeyVault.Url -kvi $BuildInfo.CodeSigning.AzureKeyVault.ApplicationId -kvs $AzureKeyVaultAppSecret -kvc $BuildInfo.CodeSigning.AzureKeyVault.CertificateName -v $file.FullName
+        AzureSignTool.exe sign -kvt $BuildInfo.CodeSigning.AzureKeyVault.TenantId -kvu $BuildInfo.CodeSigning.AzureKeyVault.Url -kvi $BuildInfo.CodeSigning.AzureKeyVault.ApplicationId -kvs $AzureKeyVaultAppSecret -kvc $BuildInfo.CodeSigning.AzureKeyVault.CertificateName -v $file.FullName
     }
 }

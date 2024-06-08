@@ -158,6 +158,7 @@ TaskHeader: |
 
 CodeSigning:
   AzureKeyVault:
+    TenantId: 195822f4-c716-4ff8-ba91-90f1a2195700
     Url: https://kv1111.vault.azure.net
     ApplicationId: bad81edd-bbbe-48c7-a355-bd146e4f7197
     CertificateName: Sign

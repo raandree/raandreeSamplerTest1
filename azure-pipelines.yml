@@ -274,6 +274,7 @@ stages:
               GalleryApiToken: $(GalleryApiToken)
               ReleaseBranch: $(defaultBranch)
               MainGitBranch: $(defaultBranch)
+              AzureKeyVaultAppSecret: $(AzureKeyVaultAppSecret)
           - task: PowerShell@2
             name: sendChangelogPR
             displayName: 'Send Changelog PR'

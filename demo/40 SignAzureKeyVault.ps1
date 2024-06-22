@@ -17,7 +17,7 @@ Connect-AzAccount -ServicePrincipal -Tenant $tenantId -Credential $credential
 Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name SignTest
 Get-AzKeyVaultSecret -VaultName $keyVaultName -Name SignTest -AsPlainText #this no longer works
 
-dotnet tool install --global AzureSignTool --version 2.0.17
+dotnet tool install --global AzureSignTool --version 5.0.0
 
 'Get-Date' | Out-File -FilePath .\TestAzureKeyVaylt.ps1
 $scriptFile = Get-Item -Path .\TestAzureKeyVaylt.ps1

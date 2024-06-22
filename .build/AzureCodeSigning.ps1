@@ -18,7 +18,11 @@ param
 
     [Parameter()]
     [string]
-    $AzureKeyVaultAppSecret = (property AzureKeyVaultAppSecret ''),
+    $AzureKeyVaultAppSecretPrerelease = (property AzureKeyVaultAppSecretPrerelease ''),
+
+    [Parameter()]
+    [string]
+    $AzureKeyVaultAppSecretRelease = (property AzureKeyVaultAppSecretRelease ''),
 
     [Parameter()]
     [string]
@@ -31,9 +35,28 @@ param
     $MainGitBranch = (property MainGitBranch 'main')
 )
 
-task Sign -if ($AzureKeyVaultAppSecret) {
+task Sign {
 
     . Set-SamplerTaskVariable
+
+    if ($moduleVersionObject.PreReleaseString -and -not $BuildInfo.CodeSigning.AzureKeyVault.Prerelease)
+    {
+        Write-Build Yellow "Skipping code signing for pre-release version '$($moduleVersionObject.ModuleVersion)' as no key vault for pre-release is configured in the 'build.yml' file."
+        return
+    }
+    elseif ($moduleVersionObject.PreReleaseString -and [string]::IsNullOrEmpty($AzureKeyVaultAppSecretPrerelease))
+    {
+        Write-Error "No key vault secret for pre-release is configured in the pipeline variables. Please store the secret in the pipeline variable named 'AzureKeyVaultAppSecretPrerelease'."
+    }
+
+    if (-not $moduleVersionObject.PreReleaseString -and -not $BuildInfo.CodeSigning.AzureKeyVault.Release)
+    {
+        Write-Error "No key vault for release is configured in the 'build.yml' file."
+    }
+    elseif (-not $moduleVersionObject.PreReleaseString -and [string]::IsNullOrEmpty($AzureKeyVaultAppSecretRelease))
+    {
+        Write-Error "No key vault secret for release is configured in the pipeline variables. Please store the secret in the pipeline variable named 'AzureKeyVaultAppSecretRelease'."
+    }
 
     $files = foreach ($filter in $BuildInfo.CodeSigning.FileSelection.Filters)
     {
@@ -46,9 +69,37 @@ task Sign -if ($AzureKeyVaultAppSecret) {
         Get-Item -Path $path
     }
 
+    $key = if ($moduleVersionObject.PreReleaseString)
+    {
+        'Prerelease'
+    }
+    else
+    {
+        'Release'
+    }
+
     foreach ($file in $files)
     {
         Write-Build DarkGray "Signing file '$($file.FullName)'"
-        AzureSignTool.exe sign -kvt $BuildInfo.CodeSigning.AzureKeyVault.TenantId -kvu $BuildInfo.CodeSigning.AzureKeyVault.Url -kvi $BuildInfo.CodeSigning.AzureKeyVault.ApplicationId -kvs $AzureKeyVaultAppSecret -kvc $BuildInfo.CodeSigning.AzureKeyVault.CertificateName -v $file.FullName
+        $param =
+        'sign',
+        '-kvt', $BuildInfo.CodeSigning.AzureKeyVault."$key".TenantId,
+        '-kvu', $BuildInfo.CodeSigning.AzureKeyVault."$key".Url,
+        '-kvi', $BuildInfo.CodeSigning.AzureKeyVault."$key".ApplicationId,
+        '-kvs', (Get-Variable -Name "AzureKeyVaultAppSecret$key" -ValueOnly),
+        '-kvc', $BuildInfo.CodeSigning.AzureKeyVault."$key".CertificateName,
+        '-tr', $BuildInfo.CodeSigning.AzureKeyVault."$key".TimeStampServerUrl,
+        '-v', $file.FullName
+
+        AzureSignTool.exe @param
+
+        if ($LASTEXITCODE -ne 0)
+        {
+            Write-Error "Failed to sign file '$($file.FullName)'. The exit code was '$LASTEXITCODE'. Please see the log above for more details."
+        }
+        else
+        {
+            Write-Build Green "File '$($file.FullName)' signed successfully."
+        }
     }
 }

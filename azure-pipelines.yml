@@ -24,7 +24,7 @@ stages:
       - job: Package_Module
         displayName: 'Package Module'
         pool:
-          vmImage: 'ubuntu-latest'
+          vmImage: 'windows-latest'
         steps:
           - pwsh: |
               dotnet tool install --global GitVersion.Tool
@@ -43,6 +43,13 @@ stages:
               targetType: inline
               script: |
                 dir -Path env: | Format-Table -Property Name, Value -AutoSize | Out-String | Write-Host
+
+          - task: DotNetCoreCLI@2
+            inputs:
+              command: custom
+              custom: tool
+              arguments: install --global azuresigntool
+            displayName: Install AzureSignTool
 
           - task: PowerShell@2
             name: package
@@ -262,13 +269,6 @@ stages:
               buildType: 'current'
               artifactName: $(buildArtifactName)
               targetPath: '$(Build.SourcesDirectory)/$(buildFolderName)'
-
-          - task: DotNetCoreCLI@2
-            inputs:
-              command: custom
-              custom: tool
-              arguments: install --global azuresigntool
-            displayName: Install AzureSignTool
 
           - task: PowerShell@2
             name: publishRelease

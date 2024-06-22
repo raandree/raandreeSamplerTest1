@@ -89,7 +89,8 @@ task Sign {
         '-kvs', (Get-Variable -Name "AzureKeyVaultAppSecret$key" -ValueOnly),
         '-kvc', $BuildInfo.CodeSigning.AzureKeyVault."$key".CertificateName,
         '-tr', $BuildInfo.CodeSigning.AzureKeyVault."$key".TimeStampServerUrl,
-        '-v', $file.FullName
+        '-v',
+        $file.FullName
 
         AzureSignTool.exe @param
 

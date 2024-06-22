@@ -60,6 +60,8 @@ stages:
               pwsh: true
             env:
               ModuleVersion: $(NuGetVersionV2)
+              AzureKeyVaultAppSecretPrerelease: $(AzureKeyVaultAppSecretPrerelease)
+              AzureKeyVaultAppSecretRelease: $(AzureKeyVaultAppSecretRelease)
 
           - task: PublishPipelineArtifact@1
             displayName: 'Publish Build Artifact'
@@ -282,7 +284,6 @@ stages:
               GalleryApiToken: $(GalleryApiToken)
               ReleaseBranch: $(defaultBranch)
               MainGitBranch: $(defaultBranch)
-              AzureKeyVaultAppSecret: $(AzureKeyVaultAppSecret)
 
           - task: PowerShell@2
             name: sendChangelogPR

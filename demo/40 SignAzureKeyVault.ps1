@@ -9,7 +9,7 @@ $secureSecret = $secret | ConvertTo-SecureString -AsPlainText -Force
 $secret = Get-AzKeyVaultSecret -VaultName $keyVaultName -Name SignTest -AsPlainText
 $secretBytes = [System.Convert]::FromBase64String($secret)
 $pfxCertObject = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList $secretBytes, '', 'Exportable'
-[System.IO.File]::WriteAllBytes('.\temp.pfx', $secretBytes)
+[System.IO.File]::WriteAllBytes("$PWD\temp.pfx", $secretBytes)
 
 # Let Azure Key Vault handle the signing process
 $credential = New-Object System.Management.Automation.PSCredential ($appId, $secureSecret)

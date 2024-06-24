@@ -17,10 +17,12 @@ Connect-AzAccount -ServicePrincipal -Tenant $tenantId -Credential $credential
 Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name SignTest
 Get-AzKeyVaultSecret -VaultName $keyVaultName -Name SignTest -AsPlainText #this no longer works
 
+dotnet nuget add source "https://api.nuget.org/v3/index.json" --name "nuget.org"
 dotnet tool install --global AzureSignTool --version 5.0.0
+dotnet tool install --global sign --version 0.9.1-beta.24312.3
 
 'Get-Date' | Out-File -FilePath .\TestAzureKeyVaylt.ps1
 $scriptFile = Get-Item -Path .\TestAzureKeyVaylt.ps1
-AzureSignTool.exe sign -kvu https://$keyVaultName.vault.azure.net -kvi $appId -kvs $secret -kvc SignTest -tr http://timestamp.digicert.com -v $scriptFile.FullName
+AzureSignTool.exe sign -kvt $tenantId -kvu https://$keyVaultName.vault.azure.net -kvi $appId -kvs $secret -kvc SignTest -tr http://timestamp.digicert.com -v $scriptFile.FullName
 
 Get-AuthenticodeSignature -FilePath $scriptFile.FullName

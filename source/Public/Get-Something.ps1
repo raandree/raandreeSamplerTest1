@@ -35,7 +35,7 @@ function Get-Something
         }
         else
         {
-            Write-Verbose 'oh dear'
+            Write-Verbose 'oh dear.'
         }
     }
 }

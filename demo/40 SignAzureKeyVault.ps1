@@ -14,7 +14,7 @@ $pfxCertObject = New-Object System.Security.Cryptography.X509Certificates.X509Ce
 # Let Azure Key Vault handle the signing process
 $credential = New-Object System.Management.Automation.PSCredential ($appId, $secureSecret)
 Connect-AzAccount -ServicePrincipal -Tenant $tenantId -Credential $credential
-Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name SignTest
+$cert = Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name SignTest
 Get-AzKeyVaultSecret -VaultName $keyVaultName -Name SignTest -AsPlainText #this no longer works
 
 dotnet nuget add source "https://api.nuget.org/v3/index.json" --name "nuget.org"

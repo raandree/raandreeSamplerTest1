@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - For changes in existing functionality.
+- Verbose message changed.
 
 ### Deprecated
 
@@ -28,4 +29,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - In case of vulnerabilities.
-

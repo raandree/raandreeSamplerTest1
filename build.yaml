@@ -161,15 +161,15 @@ TaskHeader: |
 CodeSigning:
   AzureKeyVault:
     Release:
-      TenantId: 195822f4-c716-4ff8-ba91-90f1a2195700
-      Url: https://kv1111.vault.azure.net
-      ApplicationId: bad81edd-bbbe-48c7-a355-bd146e4f7197
+      TenantId: a1627b4f-281e-4f8b-bf13-bddc0eb6857e
+      Url: https://Summit2025Test.vault.azure.net
+      ApplicationId: 9a448c96-1905-49c6-b7bc-f922c34d98f4
       CertificateName: SignRelease
       TimeStampServerUrl: http://timestamp.digicert.com
     Prerelease:
-      TenantId: 195822f4-c716-4ff8-ba91-90f1a2195700
-      Url: https://kv1111.vault.azure.net
-      ApplicationId: bad81edd-bbbe-48c7-a355-bd146e4f7197
+      TenantId: a1627b4f-281e-4f8b-bf13-bddc0eb6857e
+      Url: https://Summit2025Test.vault.azure.net
+      ApplicationId: 9a448c96-1905-49c6-b7bc-f922c34d98f4
       CertificateName: SignTest
       TimeStampServerUrl: http://timestamp.digicert.com
   FileSelection:

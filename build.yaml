@@ -2,10 +2,7 @@
 ####################################################
 #          ModuleBuilder Configuration             #
 ####################################################
-# Path to the Module Manifest to build (where path will be resolved from)
-# SourcePath: ./Sampler/Sampler.psd1
-# Output Directory where ModuleBuilder will build the Module, relative to module manifest
-# OutputDirectory: ../output/Sampler
+
 BuiltModuleSubdirectory: module
 CopyPaths:
   - en-US
@@ -79,8 +76,9 @@ BuildWorkflow:
     #- Merge_CodeCoverage_Files
 
   publish:
+
+    - Publish_Release_To_GitHub # Runs first, if token is expired it will fail early
     - publish_module_to_gallery
-    - Publish_Release_To_GitHub
 
 ####################################################
 #       PESTER  Configuration                      #

@@ -34,10 +34,10 @@ stages:
                   Write-Host -Object "##vso[task.setvariable variable=$($_.Name);]$($_.Value)"
               }
 
-              if ([string]::IsNullOrEmpty($gitversionObject.PreReleaseLabel)) {
-                $versionString = '{0}-{1}{2:D4}' -f $gitVersionObject.MajorMinorPatch, $gitVersionObject.PreReleaseLabel, $gitVersionObject.PreReleaseNumber
+              $versionString = if ([string]::IsNullOrEmpty($gitversionObject.PreReleaseLabel)) {
+                $gitVersionObject.MajorMinorPatch
               } else {
-                $versionString = $gitVersionObject.MajorMinorPatch
+                '{0}-{1}{2:D4}' -f $gitVersionObject.MajorMinorPatch, $gitVersionObject.PreReleaseLabel, $gitVersionObject.PreReleaseNumber
               }
 
               Write-Host -Object "##vso[task.setvariable variable=NuGetVersionV2;]$($versionString)"

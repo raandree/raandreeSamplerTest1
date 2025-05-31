@@ -34,7 +34,7 @@ stages:
                   Write-Host -Object "##vso[task.setvariable variable=$($_.Name);]$($_.Value)"
               }
 
-              if ($gitversionObject.PreReleaseTag -eq '') {
+              if ([string]::IsNullOrEmpty($gitversionObject.PreReleaseLabel)) {
                 $versionString = '{0}-{1}{2:D4}' -f $gitVersionObject.MajorMinorPatch, $gitVersionObject.PreReleaseLabel, $gitVersionObject.PreReleaseNumber
               } else {
                 $versionString = $gitVersionObject.MajorMinorPatch

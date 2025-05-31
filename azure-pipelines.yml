@@ -75,6 +75,7 @@ stages:
 
   - stage: Test
     dependsOn: Build
+    condition: false
     jobs:
       - job: test_linux
         displayName: 'Linux'

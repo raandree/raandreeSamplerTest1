@@ -33,7 +33,13 @@ stages:
                   Write-Host -Object "Setting Task Variable '$($_.Name)' with value '$($_.Value)'."
                   Write-Host -Object "##vso[task.setvariable variable=$($_.Name);]$($_.Value)"
               }
-              $versionString = '{0}{1}{2:D4}' -f $gitVersionObject.MajorMinorPatch, $gitVersionObject.PreReleaseTagWithDash, $gitVersionObject.PreReleaseNumber
+
+              $versionString = if ([string]::IsNullOrEmpty($gitversionObject.PreReleaseLabel)) {
+                $gitVersionObject.MajorMinorPatch
+              } else {
+                '{0}-{1}{2:D4}' -f $gitVersionObject.MajorMinorPatch, $gitVersionObject.PreReleaseLabel, $gitVersionObject.PreReleaseNumber
+              }
+
               Write-Host -Object "##vso[task.setvariable variable=NuGetVersionV2;]$($versionString)"
               Write-Host -Object "##vso[build.updatebuildnumber]$($versionString)"
             displayName: Calculate ModuleVersion (GitVersion)
@@ -251,7 +257,7 @@ stages:
           #  displayName: 'Publish Code Coverage to Codecov.io'
 
   - stage: Deploy
-    dependsOn: Test
+    dependsOn: Build
     # Only execute deploy stage if we're on master and previous stage succeeded
     condition: |
       and(

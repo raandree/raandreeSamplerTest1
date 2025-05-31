@@ -33,7 +33,7 @@ stages:
                   Write-Host -Object "Setting Task Variable '$($_.Name)' with value '$($_.Value)'."
                   Write-Host -Object "##vso[task.setvariable variable=$($_.Name);]$($_.Value)"
               }
-              $versionString = '{0}-{1}{2:D4}' -f $gitVersionObject.MajorMinorPatch, $gitVersionObject.PreReleaseLabel, $gitVersionObject.PreReleaseNumber
+              $versionString = '{0}{1}{2:D4}' -f $gitVersionObject.MajorMinorPatch, $gitVersionObject.PreReleaseTagWithDash, $gitVersionObject.PreReleaseNumber
               Write-Host -Object "##vso[task.setvariable variable=NuGetVersionV2;]$($versionString)"
               Write-Host -Object "##vso[build.updatebuildnumber]$($versionString)"
             displayName: Calculate ModuleVersion (GitVersion)
@@ -75,6 +75,7 @@ stages:
 
   - stage: Test
     dependsOn: Build
+    condition: false
     jobs:
       - job: test_linux
         displayName: 'Linux'

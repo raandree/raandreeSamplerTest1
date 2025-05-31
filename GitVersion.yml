@@ -7,11 +7,11 @@ no-bump-message: '\+semver:\s?(none|skip)'
 branches:
   main:
     label: preview
-    regex: ^main$
+    regex: ^master$|^main$
   pull-request:
     label: PR
   feature:
-    label: useBranchName
+    label: '{BranchName}'
     increment: Minor
     regex: f(eature(s)?)?[\/-]
     source-branches: ['main']

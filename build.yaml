@@ -55,7 +55,7 @@ BuildWorkflow:
 
   pack:
     - build
-    - Sign
+    #- Sign
     - package_module_nupkg
 
 

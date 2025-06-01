@@ -173,3 +173,13 @@ CodeSigning:
   FileSelection:
     #FilePaths: [test1.txt, test2.txt]
     Filters: ['*.psm1', '*.psd1']
+
+####################################################
+#               GitHub Configuration               #
+####################################################
+GitHubConfig:
+  GitHubFilesToAdd:
+    - 'CHANGELOG.md'
+  GitHubConfigUserName: dscbot # cSpell: disable-line
+  GitHubConfigUserEmail: dsccommunity@outlook.com
+  UpdateChangelogOnPrerelease: false

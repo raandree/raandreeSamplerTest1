@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - another commit
 - fix2
   - another commit
+- fix3
 
 ## [2.3.0] - 2025-05-31
 

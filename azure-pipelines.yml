@@ -28,16 +28,22 @@ stages:
         steps:
           - pwsh: |
               dotnet tool install --global GitVersion.Tool
-              $gitVersionObject = dotnet-gitversion | ConvertFrom-Json
+              $gitVersionObject = dotnet-gitversion
+              Write-Host -------------- GitVersion Outout --------------
+              $gitVersionObject | Write-Host
+              Write-Host -----------------------------------------------
+
+              $gitVersionObject = $gitVersionObject | ConvertFrom-Json
+              $longestKeyLength = ($gitVersionObject | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name | Sort-Object { $_.Length } | Select-Object -Last 1).Length
               $gitVersionObject.PSObject.Properties.ForEach{
-                  Write-Host -Object "Setting Task Variable '$($_.Name)' with value '$($_.Value)'."
+                  Write-Host -Object ("Setting Task Variable {0,-$longestKeyLength} with value '{1}'." -f $_.Name, $_.Value)
                   Write-Host -Object "##vso[task.setvariable variable=$($_.Name);]$($_.Value)"
               }
 
               $versionString = if ([string]::IsNullOrEmpty($gitversionObject.PreReleaseLabel)) {
-                $gitVersionObject.MajorMinorPatch
+                  $gitVersionObject.MajorMinorPatch
               } else {
-                '{0}-{1}{2:D4}' -f $gitVersionObject.MajorMinorPatch, $gitVersionObject.PreReleaseLabel, $gitVersionObject.PreReleaseNumber
+                  '{0}-{1}{2:D4}' -f $gitVersionObject.MajorMinorPatch, $gitVersionObject.PreReleaseLabel, $gitVersionObject.PreReleaseNumber
               }
 
               Write-Host -Object "##vso[task.setvariable variable=NuGetVersionV2;]$($versionString)"

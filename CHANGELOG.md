@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- pipeline
+
+## [2.3.1] - 2025-06-01
+
+### Fixed
+
 - fix1
   - another commit
 - fix2

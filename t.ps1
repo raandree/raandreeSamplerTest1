@@ -10,6 +10,7 @@ $gitVersionObject.PSObject.Properties.ForEach{
     Write-Host -Object "##vso[task.setvariable variable=$($_.Name);]$($_.Value)"
 }
 
+
 $lastTag = git describe --tags --abbrev=0
 $lastTag -match '^v(?<Version>(\d(\.)?){3})(-preview(?<PreviewReleaseNumber>\d{4}))?' | Out-Null
 $lastVersion = $matches['Version']

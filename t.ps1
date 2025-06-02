@@ -18,7 +18,7 @@ $isLastTagPreRelease = [bool]$lastPreviewReleaseNumber
 $isPreRelease = [bool]$gitVersionObject.PreReleaseLabel
 
 
-$versionElements = 'v', $gitVersionObject.MajorMinorPatch
+$versionElements = $gitVersionObject.MajorMinorPatch
 
 if ($isPreRelease)
 {

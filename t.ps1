@@ -36,7 +36,6 @@ if ($isPreRelease)
     }
 }
 
-
 $versionString = -join $versionElements
 
 Write-Host -Object "##vso[task.setvariable variable=NuGetVersionV2;]$($versionString)"

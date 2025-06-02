@@ -17,16 +17,23 @@ $lastPreviewReleaseNumber = $matches['PreviewReleaseNumber']
 $isLastTagPreRelease = [bool]$lastPreviewReleaseNumber
 $isPreRelease = [bool]$gitVersionObject.PreReleaseLabel
 
-
 $versionElements = $gitVersionObject.MajorMinorPatch
 
 if ($isPreRelease)
 {
-    $nextPreReleaseNumber = [int]$lastPreviewReleaseNumber + 1
-    $paddedNextPreReleaseNumber = '{0:D4}' -f $nextPreReleaseNumber
+    if ($gitVersionObject.BranchName -eq 'main')
+    {
+        $nextPreReleaseNumber = [int]$lastPreviewReleaseNumber + 1
+        $paddedNextPreReleaseNumber = '{0:D4}' -f $nextPreReleaseNumber
 
-    $versionElements += $gitVersionObject.PreReleaseLabelWithDash
-    $versionElements += $paddedNextPreReleaseNumber
+        $versionElements += $gitVersionObject.PreReleaseLabelWithDash
+        $versionElements += $paddedNextPreReleaseNumber
+    }
+    else
+    {
+        $versionElements += $gitVersionObject.PreReleaseLabelWithDash
+        $versionElements += $gitVersionObject.PreReleaseNumber
+    }
 }
 
 $versionString = -join $versionElements

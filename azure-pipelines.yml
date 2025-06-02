@@ -27,6 +27,7 @@ stages:
           vmImage: 'windows-latest'
         steps:
           - pwsh: |
+              dotnet tool install --global GitVersion.Tool
               $gitVersionObject = dotnet-gitversion
               Write-Host -------------- GitVersion Outout --------------
               $gitVersionObject | Write-Host

@@ -40,11 +40,26 @@ stages:
                   Write-Host -Object "##vso[task.setvariable variable=$($_.Name);]$($_.Value)"
               }
 
-              $versionString = if ([string]::IsNullOrEmpty($gitversionObject.PreReleaseLabel)) {
-                  $gitVersionObject.MajorMinorPatch
-              } else {
-                  '{0}-{1}{2:D4}' -f $gitVersionObject.MajorMinorPatch, $gitVersionObject.PreReleaseLabel, $gitVersionObject.PreReleaseNumber
+              $lastTag = git describe --tags --abbrev=0
+              $lastTag -match '^v(?<Version>(\d(\.)?){3})(-preview(?<PreviewReleaseNumber>\d{4}))?' | Out-Null
+              $lastVersion = $matches['Version']
+              $lastPreviewReleaseNumber = $matches['PreviewReleaseNumber']
+              $isLastTagPreRelease = [bool]$lastPreviewReleaseNumber
+              $isPreRelease = [bool]$gitVersionObject.PreReleaseLabel
+
+
+              $versionElements = $gitVersionObject.MajorMinorPatch
+
+              if ($isPreRelease)
+              {
+                  $nextPreReleaseNumber = [int]$lastPreviewReleaseNumber + 1
+                  $paddedNextPreReleaseNumber = '{0:D4}' -f $nextPreReleaseNumber
+
+                  $versionElements += $gitVersionObject.PreReleaseLabelWithDash
+                  $versionElements += $paddedNextPreReleaseNumber
               }
+
+              $versionString = -join $versionElements
 
               Write-Host -Object "##vso[task.setvariable variable=NuGetVersionV2;]$($versionString)"
               Write-Host -Object "##vso[build.updatebuildnumber]$($versionString)"

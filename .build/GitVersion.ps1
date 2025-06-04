@@ -49,5 +49,4 @@ task GitVersion -if ($env:AGENT_NAME) {
 }
 
 #$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
-
 #ModuleVersion: $(NuGetVersionV2)

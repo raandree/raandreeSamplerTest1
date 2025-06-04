@@ -1,5 +1,9 @@
 task GitVersion -if ($env:AGENT_NAME) {
+
+    Write-Host 'Installing GitVersion.Tool...' -NoNewline
     dotnet tool install --global GitVersion.Tool
+    Write-Host 'done.'
+
     $gitVersionObject = dotnet-gitversion
     Write-Host -------------- GitVersion Outout --------------
     $gitVersionObject | Write-Host

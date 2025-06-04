@@ -50,7 +50,6 @@ stages:
               arguments: '-ResolveDependency -tasks pack'
               pwsh: true
             env:
-              ModuleVersion: $(NuGetVersionV2)
               AzureKeyVaultAppSecretPrerelease: $(AzureKeyVaultAppSecretPrerelease)
               AzureKeyVaultAppSecretRelease: $(AzureKeyVaultAppSecretRelease)
 

@@ -19,7 +19,6 @@ task GitVersion -if ($env:AGENT_NAME) {
     $isLastTagPreRelease = [bool]$lastPreviewReleaseNumber
     $isPreRelease = [bool]$gitVersionObject.PreReleaseLabel
 
-
     $versionElements = $gitVersionObject.MajorMinorPatch
 
     if ($isPreRelease)
@@ -41,6 +40,14 @@ task GitVersion -if ($env:AGENT_NAME) {
 
     $versionString = -join $versionElements
 
+    Write-Host -Object "Writing version string '$versionString' to build variable 'NuGetVersionV2'."
     Write-Host -Object "##vso[task.setvariable variable=NuGetVersionV2;]$($versionString)"
+    Write-Host -Object "##vso[task.setvariable variable=ModuleVersion;]$($versionString)"
+
+    Write-Host -Object "Updating build number to '$versionString'."
     Write-Host -Object "##vso[build.updatebuildnumber]$($versionString)"
 }
+
+#$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
+
+#ModuleVersion: $(NuGetVersionV2)

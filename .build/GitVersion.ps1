@@ -1,9 +1,12 @@
 task GitVersion -if ($env:AGENT_NAME) {
 
+
+    #dotnetgitversioninstall: Sepertate install task only on Az Agents without GitVersion not installed
     Write-Host 'Installing GitVersion.Tool...' -NoNewline
     dotnet tool install --global GitVersion.Tool
     Write-Host 'done.'
 
+    #either dotnet-gitversion or gitversion
     $gitVersionObject = dotnet-gitversion
     Write-Host -------------- GitVersion Outout --------------
     $gitVersionObject | Write-Host

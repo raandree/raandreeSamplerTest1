@@ -19,6 +19,7 @@ task GitVersion -if ($env:AGENT_NAME) {
         Write-Host -Object "##vso[task.setvariable variable=$($_.Name);]$($_.Value)"
     }
 
+    #Check the gitversion modes (CD) / how gitversion calculates the prerelease version
     $lastTag = git describe --tags --abbrev=0
     $lastTag -match '^v(?<Version>(\d(\.)?){3})(-preview(?<PreviewReleaseNumber>\d{4}))?' | Out-Null
     $lastVersion = $matches['Version']

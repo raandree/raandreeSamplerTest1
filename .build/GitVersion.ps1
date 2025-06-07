@@ -1,13 +1,40 @@
-task GitVersion -if ($env:AGENT_NAME) {
+task GitVersion -if (Get-Command -Name dotnet-gitversion.exe, gitversion.exe) {
 
+    $command = if (Get-Command -Name gitversion.exe -ErrorAction SilentlyContinue)
+    {
+        Write-Host 'Using gitversion.exe...'
+        'gitversion.exe'
+    }
+    elseif (Get-Command -Name dotnet-gitversion -ErrorAction SilentlyContinue)
+    {
+        Write-Host 'Using dotnet-gitversion...'
+        'dotnet-gitversion'
+    }
+    else
+    {
+        Write-Error 'Neither gitversion.exe nor dotnet-gitversion is available.'
+        return
+    }
 
     #dotnetgitversioninstall: Sepertate install task only on Az Agents without GitVersion not installed
-    Write-Host 'Installing GitVersion.Tool...' -NoNewline
-    dotnet tool install --global GitVersion.Tool
-    Write-Host 'done.'
+
+    if (Get-Command -Name dotnet-gitversion -ErrorAction SilentlyContinue)
+    {
+        Write-Host 'dotnet-gitversion is already installed.'
+    }
+    else
+    {
+        Write-Host 'Installing dotnet-gitversion...'
+        dotnet tool install --global GitVersion.Tool
+        Write-Host 'done.'
+    }
+
+    #Write-Host 'Installing GitVersion.Tool...' -NoNewline
+    #dotnet tool install --global GitVersion.Tool
+    #Write-Host 'done.'
 
     #either dotnet-gitversion or gitversion
-    $gitVersionObject = dotnet-gitversion
+    $gitVersionObject = & $command
     Write-Host -------------- GitVersion Outout --------------
     $gitVersionObject | Write-Host
     Write-Host -----------------------------------------------
@@ -51,6 +78,9 @@ task GitVersion -if ($env:AGENT_NAME) {
     Write-Host -Object "Writing version string '$versionString' to build variable 'NuGetVersionV2'."
     #Write-Host -Object "##vso[task.setvariable variable=NuGetVersionV2;]$($versionString)"
     Write-Host -Object "##vso[task.setvariable variable=ModuleVersion;]$($versionString)"
+    $env:ModuleVersion = $versionString
+    $global:ModuleVersion = $versionString
+    [System.Environment]::SetEnvironmentVariable('ModuleVersion', $versionString, 'Process')
 
     Write-Host -Object "Updating build number to '$versionString'."
     Write-Host -Object "##vso[build.updatebuildnumber]$($versionString)"

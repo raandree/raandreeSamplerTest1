@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - task dummy fix 5 in main
 - change in main 1
 - fix mode
+- build t1
 
 ## [2.4.1] - 2025-06-04
 

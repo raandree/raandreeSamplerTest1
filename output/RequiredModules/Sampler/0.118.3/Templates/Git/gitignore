@@ -1,11 +1,4 @@
-!output/
-
-output/*
-!output/RequiredModules
-
-output/RequiredModules/*
-
-!output/RequiredModules/Sampler
+output/
 
 **.bak
 *.local.*

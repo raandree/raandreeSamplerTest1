@@ -25,7 +25,6 @@ task GitVersion -if (Get-Command -Name dotnet-gitversion.exe, gitversion.exe -Er
     $longestKeyLength = ($gitVersionObject | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name | Sort-Object { $_.Length } | Select-Object -Last 1).Length
     $gitVersionObject.PSObject.Properties.ForEach{
         Write-Host -Object ("Setting Task Variable {0,-$longestKeyLength} with value '{1}'." -f $_.Name, $_.Value)
-        Write-Host -Object "##vso[task.setvariable variable=$($_.Name);]$($_.Value)"
     }
 
     $lastTag = git describe --tags --abbrev=0

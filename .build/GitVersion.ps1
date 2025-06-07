@@ -1,4 +1,4 @@
-task GitVersion -if (Get-Command -Name dotnet-gitversion.exe, gitversion.exe) {
+task GitVersion -if (Get-Command -Name dotnet-gitversion.exe, gitversion.exe -ErrorAction SilentlyContinue) {
 
     $command = if (Get-Command -Name gitversion.exe -ErrorAction SilentlyContinue)
     {

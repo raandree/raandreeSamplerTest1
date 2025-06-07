@@ -1,9 +1,16 @@
-mode: ContinuousDelivery
+mode: ManualDeployment
 next-version: 2.1.0
+#major-version-bump-message: \+semver:\s?(breaking\schange|breaking|major)\b'
+#minor-version-bump-message: '\+semver:\s?(adds?|features?|minor)\b'
+#patch-version-bump-message: '\+semver:\s?(fix|patch)'
 major-version-bump-message: '(breaking\schange|breaking|major)\b'
 minor-version-bump-message: '(adds?|features?|minor)\b'
 patch-version-bump-message: '\s?(fix|patch)'
 no-bump-message: '\+semver:\s?(none|skip)'
+#strategies:
+  #- ConfiguredNextVersion
+  #- TaggedCommit
+commit-message-incrementing: Enabled
 branches:
   main:
     label: preview

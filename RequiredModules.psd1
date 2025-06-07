@@ -13,6 +13,7 @@
     ModuleBuilder               = 'latest'
     ChangelogManagement         = 'latest'
     #Sampler                     = 'latest'
+    Plaster                     = 'latest'
     'Sampler.GitHubTasks'       = 'latest'
     MarkdownLinkCheck           = 'latest'
     'DscResource.Common'        = 'latest'

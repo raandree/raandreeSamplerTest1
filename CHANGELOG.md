@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitVersion task
 - task dummy fix 1
 - task dummy fix 2
+- task dummy fix 3
 
 ## [2.4.1] - 2025-06-04
 

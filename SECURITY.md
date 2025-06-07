@@ -1,5 +1,7 @@
 ## Security
 
+
+
 We take the security of our modules seriously, which includes all source code repositories managed through our GitHub organization.
 
 If you believe you have found a security vulnerability in any of our repository, please report it to us as described below.
@@ -13,7 +15,6 @@ The easiest way to do so is to send us a direct message via twitter or find us
 on some other social platform.
 
 You should receive a response within 48 hours. If for some reason you do not, please follow up by other means or to other contributors.
-
 
 Please include the requested information listed below (as much as you can provide) to help us better understand the nature and scope of the possible issue:
 

@@ -1,4 +1,4 @@
-mode: ManualDeployment
+mode: ManualDeployment #https://gitversion.net/docs/reference/modes/manual-deployment
 next-version: 2.1.0
 #major-version-bump-message: \+semver:\s?(breaking\schange|breaking|major)\b'
 #minor-version-bump-message: '\+semver:\s?(adds?|features?|minor)\b'

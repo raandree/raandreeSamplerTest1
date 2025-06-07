@@ -1053,7 +1053,27 @@ function Get-SamplerBuildVersion
         {
             Write-Verbose -Message 'Using the version from GitVersion.'
 
-            $ModuleVersion = (gitversion | ConvertFrom-Json -ErrorAction 'Stop').NuGetVersionV2
+            $gitVersionObject = gitversion | ConvertFrom-Json
+            $isPreRelease = [bool]$gitVersionObject.PreReleaseLabel
+            $ModuleVersion = $gitVersionObject.MajorMinorPatch
+
+            if ($isPreRelease)
+            {
+                if ($gitVersionObject.BranchName -eq 'main')
+                {
+                    $nextPreReleaseNumber = [int]$lastPreviewReleaseNumber + 1
+                    $paddedNextPreReleaseNumber = '{0:D4}' -f $nextPreReleaseNumber
+
+                    $ModuleVersion += $gitVersionObject.PreReleaseLabelWithDash
+                    $ModuleVersion += $paddedNextPreReleaseNumber
+                }
+                else
+                {
+                    $ModuleVersion += $gitVersionObject.PreReleaseLabelWithDash
+                    $ModuleVersion += $gitVersionObject.PreReleaseNumber
+                }
+            }
+
         }
         elseif (-not [System.String]::IsNullOrEmpty($ModuleManifestPath))
         {

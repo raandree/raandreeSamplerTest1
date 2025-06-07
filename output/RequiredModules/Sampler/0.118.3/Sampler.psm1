@@ -1061,8 +1061,7 @@ function Get-SamplerBuildVersion
             {
                 if ($gitVersionObject.BranchName -eq 'main')
                 {
-                    #$nextPreReleaseNumber = [int]$lastPreviewReleaseNumber + 1
-                    $nextPreReleaseNumber = $gitVersionObject.PreReleaseNumber
+                    $nextPreReleaseNumber = [int]$lastPreviewReleaseNumber + 1
                     $paddedNextPreReleaseNumber = '{0:D4}' -f $nextPreReleaseNumber
 
                     $versionElements += $gitVersionObject.PreReleaseLabelWithDash
@@ -1071,7 +1070,7 @@ function Get-SamplerBuildVersion
                 else
                 {
                     $versionElements += $gitVersionObject.PreReleaseLabelWithDash
-                    $versionElements += $gitVersionObject.PreReleaseNumber
+                    $versionElements += '.' + $gitVersionObject.CommitsSinceVersionSource
                 }
             }
 

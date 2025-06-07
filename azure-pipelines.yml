@@ -27,13 +27,12 @@ stages:
           vmImage: 'windows-latest'
         steps:
 
-          - task: PowerShell@2
-            name: displayEnvVariables
-            displayName: 'Display Environment Variables'
+          - task: DotNetCoreCLI@2
             inputs:
-              targetType: inline
-              script: |
-                dir -Path env: | Format-Table -Property Name, Value -AutoSize | Out-String | Write-Host
+              command: custom
+              custom: tool
+              arguments: install --global GitVersion.Tool
+            displayName: Install GitVersionTool
 
           - task: DotNetCoreCLI@2
             inputs:
@@ -41,6 +40,14 @@ stages:
               custom: tool
               arguments: install --global azuresigntool
             displayName: Install AzureSignTool
+
+          - task: PowerShell@2
+            name: displayEnvVariables
+            displayName: 'Display Environment Variables'
+            inputs:
+              targetType: inline
+              script: |
+                dir -Path env: | Format-Table -Property Name, Value -AutoSize | Out-String | Write-Host
 
           - task: PowerShell@2
             name: package

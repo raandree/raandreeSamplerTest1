@@ -39,7 +39,7 @@ task GitVersion -if (Get-Command -Name dotnet-gitversion.exe, gitversion.exe -Er
     {
         if ($gitVersionObject.BranchName -eq 'main')
         {
-            $nextPreReleaseNumber = [int]$lastPreviewReleaseNumber + 1
+            $nextPreReleaseNumber = $gitVersionObject.PreReleaseNumber
             $paddedNextPreReleaseNumber = '{0:D4}' -f $nextPreReleaseNumber
 
             $versionElements += $gitVersionObject.PreReleaseLabelWithDash

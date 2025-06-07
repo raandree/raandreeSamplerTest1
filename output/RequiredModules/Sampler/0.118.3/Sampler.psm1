@@ -1009,7 +1009,7 @@ function Get-SamplerAbsolutePath
         Path to the Module Manifest that should determine the version if GitVersion is not available.
 
     .PARAMETER ModuleVersion
-        Provide the Version to be splitted and do not rely on GitVersion or the Module's manifest.
+        Provide the Version to be split and do not rely on GitVersion or the Module's manifest.
 
     .EXAMPLE
         Get-SamplerBuildVersion -ModuleManifestPath source\MyModule.psd1

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - build t1
 - build t2
 - manual mode
+- fix pre 1
 
 ## [2.4.1] - 2025-06-04
 

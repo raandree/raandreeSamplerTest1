@@ -27,11 +27,6 @@ task GitVersion -if (Get-Command -Name dotnet-gitversion.exe, gitversion.exe -Er
         Write-Host -Object ("Setting Task Variable {0,-$longestKeyLength} with value '{1}'." -f $_.Name, $_.Value)
     }
 
-    #$lastTag = git describe --tags --abbrev=0
-    #$lastTag -match '^v(?<Version>(\d(\.)?){3})(-preview(?<PreviewReleaseNumber>\d{4}))?' | Out-Null
-    #$lastVersion = $matches['Version']
-    #$lastPreviewReleaseNumber = $matches['PreviewReleaseNumber']
-    #$isLastTagPreRelease = [bool]$lastPreviewReleaseNumber
     $isPreRelease = [bool]$gitVersionObject.PreReleaseLabel
     $versionElements = $gitVersionObject.MajorMinorPatch
 
